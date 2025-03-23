@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from together_api import TogetherAI
 from intent_classifier import get_intent
 from execute import decompose_and_search
+from maestro_executor import execute_task
 import uvicorn
 
 app = FastAPI()
@@ -110,6 +111,9 @@ def refine_plan(request: RefinePlanRequest):
 
     return RefinePlanResponse(updated_plan=updated_plan)
 
+@app.post("/execute_plan")
+def execute_plan_maestro(request):
+    return execute_task(request['plan'])
 
 # Optional: root endpoint for a simple health-check
 @app.get("/")
