@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from src.schema import *
+from src.chat import get_plan, refine_plan
+from src.maestro_executor import execute_task
 
 app = FastAPI()
 
@@ -15,19 +18,23 @@ app.add_middleware(
 async def root():
     return {"message": "Hello World"}
 
-@app.get("/get_plan")
-async def get_plan(user_task: str):
-    return {"plan": "plan"}
+@app.post("/get_plan", response_model=GetPlanResponse)
+def get_plan_endpoint(request: GetPlanRequest):
+    plan = get_plan(request.user_intent)
+    return GetPlanResponse(**plan)
 
-@app.get("/refine_plan")
-async def refine_plan(plan: str):
-    return {"refined_plan": "refined_plan"}
+@app.post("/refine_plan", response_model=RefinePlanResponse)
+async def refine_plan_endpoint(request: RefinePlanRequest):
+    refined_plan = refine_plan(request.current_plan, request.suggestion)
+    return RefinePlanResponse(**refined_plan)
 
 
-@app.get("/execute_plan")
-async def execute_plan(refined_plan: str):
-    return {"result": "result"}
+@app.post("/execute_plan", response_model=PlanExecuteResponse)
+async def execute_plan(request: PlanExecuteRequest):
+    result = execute_task(request.plan)
+    return PlanExecuteResponse(result=result)
+
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
