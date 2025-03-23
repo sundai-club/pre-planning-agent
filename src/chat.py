@@ -1,6 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from together_api import TogetherAI
+from intent_classifier import get_intent
+from execute import decompose_and_search
+import uvicorn
 
 app = FastAPI()
 
@@ -34,10 +37,20 @@ def get_plan(request: GetPlanRequest):
     # Instantiate your LLM client (make sure your TogetherAI __init__ handles API keys appropriately)
     ai = TogetherAI()
 
+    # Classify the intent to do a web search
+    intent = get_intent(request.user_intent)
+    search_results = ""
+    if intent.get("web_search"):
+        # Decompose the query and perform web searches
+        search_results = decompose_and_search(request.user_intent)
+        
+    
+
     plan_prompt = (
         "You are a helpful planning assistant. We need to produce a plan in JSON format that an agentic AI platform can follow.\n"
         "Based on the following user intent, create a structured plan: \n\n"
         f"User Intent: {request.user_intent}\n\n"
+        f"Web search results: {search_results}\n\n"
         "The final call to the agentic AI might look like this:\n\n"
         "  run = client.beta.maestro.runs.create_and_poll(\n"
         "      input=\"Write a poem about hackathons\",\n"
@@ -53,8 +66,7 @@ def get_plan(request: GetPlanRequest):
         "Please provide a plan in **valid JSON** with the following keys:\n"
         "- \"input\": string\n"
         "- \"requirements\": array of objects with \"name\" and \"description\"\n"
-        "- \"context\": object\n"
-        "- \"tools\": array of objects (e.g., {\"type\": \"web_search\"} or {\"type\": \"file_search\")\n\n"
+        "- \"tools\": {\"type\": \"web_search\"} "
         "Make sure your JSON is well-formed and does not include extra commentary outside the JSON.\n"
     )
 
@@ -103,3 +115,7 @@ def refine_plan(request: RefinePlanRequest):
 @app.get("/")
 def read_root():
     return {"message": "Agentic AI pre-planner API is running."}
+
+if __name__ == "__main__":
+    # Run the server continuously on host 0.0.0.0 and port 8000
+    uvicorn.run(app, host="0.0.0.0", port=8000)
