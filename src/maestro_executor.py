@@ -16,30 +16,30 @@ def execute_task(task):
     
     return run
 
-sample_input = {
-  "input": "Plan a 3-day trip to Paris, focusing on art museums and local cuisine",
-  "requirements": [
-    {
-      "name": "trip duration",
-      "description": "The trip should be exactly 3 days long"
-    },
-    {
-      "name": "location",
-      "description": "The trip should take place in Paris, France"
-    },
-    {
-      "name": "activities",
-      "description": "The trip should include visits to at least 2 art museums"
-    },
-    {
-      "name": "cuisine",
-      "description": "The trip should include trying local French cuisine"
-    },
-  ],
-  "tools": [
-    {
-      "type": "web_search"
-    },]
-}
+# sample_input = {
+#   "input": "Plan a 3-day trip to Paris, focusing on art museums and local cuisine",
+#   "requirements": [
+#     {
+#       "name": "trip duration",
+#       "description": "The trip should be exactly 3 days long"
+#     },
+#     {
+#       "name": "location",
+#       "description": "The trip should take place in Paris, France"
+#     },
+#     {
+#       "name": "activities",
+#       "description": "The trip should include visits to at least 2 art museums"
+#     },
+#     {
+#       "name": "cuisine",
+#       "description": "The trip should include trying local French cuisine"
+#     },
+#   ],
+#   "tools": [
+#     {
+#       "type": "web_search"
+#     },]
+# }
 
-print(execute_task(sample_input))
+# print(execute_task(sample_input))
