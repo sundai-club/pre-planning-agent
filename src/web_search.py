@@ -139,8 +139,8 @@ def search_all_subqueries(subqueries, results_per_query=5):
 
 def save_search_results(all_results, filename="search_results.json"):
     # Save the search results to a JSON file
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(all_results, f, indent=2, ensure_ascii=False)
-    print(f"Results saved to {filename}")
+   
+    return json.dump(all_results, indent=2, ensure_ascii=False)
+    # print(f"Results saved to {filename}")
     
-    return all_results
+    # return all_results
