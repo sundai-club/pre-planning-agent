@@ -12,8 +12,3 @@ class TogetherAI:
             temperature=temperature,
         )
         return response.choices[0].message.content
-
-
-# if __name__ == "__main__":
-#     ai = TogetherAI()
-#     print(ai.generate("Hello, world!"))
