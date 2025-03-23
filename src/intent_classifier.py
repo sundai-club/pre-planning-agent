@@ -1,5 +1,5 @@
-from together_api import TogetherAI
-from utils import parse_response
+from src.together_api import TogetherAI
+from src.utils import parse_response
 
 client = TogetherAI()
 

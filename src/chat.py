@@ -1,36 +1,12 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from together_api import TogetherAI
-from intent_classifier import get_intent
-from execute import decompose_and_search
-from maestro_executor import execute_task
-import uvicorn
-
-app = FastAPI()
-
-
-# Request and Response Models
-class GetPlanRequest(BaseModel):
-    user_intent: str
-
-
-class GetPlanResponse(BaseModel):
-    plan_option_1: str
-    plan_option_2: str
-
-
-class RefinePlanRequest(BaseModel):
-    current_plan: str
-    suggestion: str
-
-
-class RefinePlanResponse(BaseModel):
-    updated_plan: str
-
+from src.together_api import TogetherAI
+from src.intent_classifier import get_intent
+from src.execute import decompose_and_search
+from src.maestro_executor import execute_task
+from fastapi import HTTPException
+from src.utils import parse_response
 
 # Endpoint to generate two plan options
-@app.post("/get_plan", response_model=GetPlanResponse)
-def get_plan(request: GetPlanRequest):
+def get_plan(user_intent: str):
     """
     Generate two JSON-based plan options based on the provided user intent.
     The plan output is structured for an agentic AI platform.
@@ -39,18 +15,18 @@ def get_plan(request: GetPlanRequest):
     ai = TogetherAI()
 
     # Classify the intent to do a web search
-    intent = get_intent(request.user_intent)
+    intent = get_intent(user_intent)
     search_results = ""
     if intent.get("web_search"):
         # Decompose the query and perform web searches
-        search_results = decompose_and_search(request.user_intent)
+        search_results = decompose_and_search(user_intent)
         
     
 
     plan_prompt = (
         "You are a helpful planning assistant. We need to produce a plan in JSON format that an agentic AI platform can follow.\n"
         "Based on the following user intent, create a structured plan: \n\n"
-        f"User Intent: {request.user_intent}\n\n"
+        f"User Intent: {user_intent}\n\n"
         f"Web search results: {search_results}\n\n"
         "The final call to the agentic AI might look like this:\n\n"
         "  run = client.beta.maestro.runs.create_and_poll(\n"
@@ -78,48 +54,43 @@ def get_plan(request: GetPlanRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM generation failed: {e}")
 
-    return GetPlanResponse(plan_option_1=plan_option_1, plan_option_2=plan_option_2)
+    return {"plan_option_1": plan_option_1, "plan_option_2": plan_option_2}
 
 
 # Endpoint to refine an existing plan based on a suggestion
-@app.post("/refine_plan", response_model=RefinePlanResponse)
-def refine_plan(request: RefinePlanRequest):
+def refine_plan(current_plan: str, suggestion: str):
     """
     Refine a given JSON plan based on a user-provided suggestion.
     The returned plan maintains the structure required by the agentic AI platform.
     """
     ai = TogetherAI()
 
-    refine_prompt = (
-        "You are a helpful planning assistant. We have a current JSON plan and a user suggestion. "
-        "Revise the plan accordingly, ensuring it remains valid JSON with the required keys:\n"
-        "  - \"input\"\n"
-        "  - \"requirements\" (array of objects with 'name' and 'description')\n"
-        "  - \"context\" (object)\n"
-        "  - \"tools\" (array of objects)\n\n"
-        "Here is the current plan (JSON):\n"
-        f"{request.current_plan}\n\n"
-        "User Suggestion:\n"
-        f"{request.suggestion}\n\n"
-        "Return only valid JSON, no extra commentary."
-    )
+    refine_prompt = """
+    You are a helpful planning assistant. We have a current JSON plan and a user suggestion.
+    Revise the plan accordingly, ensuring it remains valid JSON with the required keys:
+    ```json
+        {{"input" : "input",
+        "requirements" : "[{{"name" : "name", "description" : "description"}}]",
+        "tools" : "[{{"type" : "type"}}]"
+        }}
+    ```
+    Here is the current plan (JSON):
+
+    {current_plan}
+    
+    User Suggestion:
+    
+    {suggestion}
+    
+    Return only valid JSON, no extra commentary.
+    Output:
+    """.format(current_plan=current_plan, suggestion=suggestion)
+    
 
     try:
         updated_plan = ai.generate(refine_prompt)
+        updated_plan = parse_response(updated_plan)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM generation failed: {e}")
 
-    return RefinePlanResponse(updated_plan=updated_plan)
-
-@app.post("/execute_plan")
-def execute_plan_maestro(request):
-    return execute_task(request['plan'])
-
-# Optional: root endpoint for a simple health-check
-@app.get("/")
-def read_root():
-    return {"message": "Agentic AI pre-planner API is running."}
-
-if __name__ == "__main__":
-    # Run the server continuously on host 0.0.0.0 and port 8000
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    return {"updated_plan": updated_plan}
