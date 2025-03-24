@@ -49,10 +49,8 @@ Output:""".format(num_subqueries=num_subqueries, query=query)
     
     # Extract response content
     content = response.choices[0].message.content
-    print(content)
     sub_queries = parse_response(content)["search_queries"]
 
-    print(sub_queries)
     
     sub_queries = sub_queries[:num_subqueries]
     

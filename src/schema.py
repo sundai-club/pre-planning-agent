@@ -4,11 +4,11 @@ class GetPlanRequest(BaseModel):
     user_intent: str
 
 class GetPlanResponse(BaseModel):
-    plan_option_1: str
-    plan_option_2: str
+    plan_option_1: dict
+    plan_option_2: dict
 
 class RefinePlanRequest(BaseModel):
-    current_plan: str
+    current_plan: dict
     suggestion: str
 
 

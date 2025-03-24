@@ -21,7 +21,6 @@ if 'final_response' not in st.session_state:
 def generate_initial_plans(task: str) -> List[Dict]:
 
     plans = requests.post("http://localhost:8000/get_plan", json={"user_intent": task})
-    print(plans.json())
     plan1 = plans.json()['plan_option_1']
     plan2 = plans.json()['plan_option_2']
     
@@ -34,7 +33,7 @@ def process_chat_message(message: str, plan: Dict) -> Dict:
 
 def execute_plan(plan: Dict) -> str:
     execution_result = requests.post("http://localhost:8000/execute_plan", json={"plan": plan})
-    return execution_result
+    return execution_result.json()["result"]
 
 st.title("Pre-Planning Agent")
 
@@ -119,6 +118,7 @@ elif st.session_state.stage == "refinement":
         st.rerun()
 
 elif st.session_state.stage == "final":
+    st.expander("Selected Plan", expanded=True).write(st.session_state.selected_plan)
     st.header("Step 4: Final Result")
     
     st.markdown(st.session_state.final_response)
