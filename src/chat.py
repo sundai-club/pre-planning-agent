@@ -66,6 +66,7 @@ def refine_plan(current_plan: str, suggestion: str):
     refine_prompt = """
     You are a helpful planning assistant. We have a current JSON plan and a user suggestion.
     Revise the plan accordingly, ensuring it remains valid JSON with the required keys:
+    In case the user asks to add a new requirement, do not modify the existing requirements.
     ```json
         {{"input" : "input",
         "requirements" : "[{{"name" : "name", "description" : "description", "is_mandatory" : "true"}}]",
